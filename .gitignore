@@ -1,3 +1,5 @@
+include/secrets.h
+
 # VSCode + PlatformIO
 
 .pio
@@ -66,3 +68,4 @@ tags
 *.exe
 *.out
 *.app
+
