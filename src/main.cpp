@@ -4,17 +4,21 @@
 #include <ArduinoJson.h>
 #include <GxEPD2_BW.h>
 #include <fonts/Font5x7Fixed.h>
+#include <LinkedList.h>
 
 #include "secrets.h"
 #include "pins.h"
+#include "TrelloClient.h"
 
 #define FONT_OFFSET_X 0
 #define FONT_OFFSET_Y -7
 
 GxEPD2_BW<GxEPD2_213_B72, GxEPD2_213_B72::HEIGHT> display(GxEPD2_213_B72(CS_PIN, DC_PIN, RST_PIN, BUSY_PIN));
 
+TrelloClient trello(TRELLO_API_KEY, TRELLO_TOKEN);
+
 String ListTitle = "To do list";
-String TodoList[3];
+LinkedList<TrelloList> Lists;
 
 void drawGrid() {
     for (int i = 0; i < display.height(); i += 10) {
@@ -26,45 +30,6 @@ void drawGrid() {
 
 void setCursorWithOffser(int16_t x, int16_t y) {
     display.setCursor(x - FONT_OFFSET_X, y - FONT_OFFSET_Y);
-}
-
-void fetchData() {
-    char boardId[] = BOARD_ID;
-
-    String baseUrl = "https://api.trello.com/1/";
-    String authParams = String("?key=") + TRELLO_API_KEY + "&token=" + TRELLO_TOKEN;
-
-    String getListsFromBoardUrl = baseUrl + "boards/" + boardId + "/lists";
-
-    Serial.println(getListsFromBoardUrl);
-
-    HTTPClient http;
-    http.begin(getListsFromBoardUrl + authParams);
-    int code = http.GET();
-
-    Serial.print("Response code = ");
-    Serial.println(code);
-
-    if (code == 0) {
-        http.end();
-        return;
-    }
-
-    Stream& response = http.getStream();
-    DynamicJsonDocument doc(2048);
-    DeserializationError error = deserializeJson(doc, response);
-
-    http.end();
-
-    if (error) {
-        Serial.print(F("deserializeJson() failed with code "));
-        Serial.println(error.f_str());
-        return;
-    }
-
-    TodoList[0] = doc[0]["name"].as<String>();
-    TodoList[1] = doc[1]["name"].as<String>();
-    TodoList[2] = doc[2]["name"].as<String>();
 }
 
 void connectToWiFi() {
@@ -88,7 +53,7 @@ void setup() {
     display.setFullWindow();
 
     connectToWiFi();
-    fetchData();
+    trello.GetListsFromBoard(BOARD_ID, Lists);
 
     display.firstPage();
     do
@@ -98,11 +63,9 @@ void setup() {
         setCursorWithOffser(13, 2);
         display.print(ListTitle);
 
-        for (int i = 0; i < 3; i++) {
-            if (TodoList[i] != nullptr) {
-                setCursorWithOffser(13, 22 + i * 10);
-                display.print(TodoList[i]);
-            }
+        for (int i = 0; i < Lists.size(); i++) {
+            setCursorWithOffser(13, 22 + i * 10);
+            display.print(Lists.get(i).name);
         }
 
         setCursorWithOffser(13, 102);
