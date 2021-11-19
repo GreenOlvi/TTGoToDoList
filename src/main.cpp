@@ -18,7 +18,6 @@ GxEPD2_BW<GxEPD2_213_B72, GxEPD2_213_B72::HEIGHT> display(GxEPD2_213_B72(CS_PIN,
 TrelloClient trello(TRELLO_API_KEY, TRELLO_TOKEN);
 
 String ListTitle = "To do list";
-LinkedList<TrelloList> Lists;
 
 void drawGrid() {
     for (int i = 0; i < display.height(); i += 10) {
@@ -53,7 +52,10 @@ void setup() {
     display.setFullWindow();
 
     connectToWiFi();
-    trello.GetListsFromBoard(BOARD_ID, Lists);
+    // LinkedList<TrelloList> Lists;
+    // trello.GetListsFromBoard(BOARD_ID, Lists);
+    LinkedList<TrelloCard> Cards;
+    trello.GetCardsFromBoard(BOARD_ID, Cards);
 
     display.firstPage();
     do
@@ -63,9 +65,14 @@ void setup() {
         setCursorWithOffser(13, 2);
         display.print(ListTitle);
 
-        for (int i = 0; i < Lists.size(); i++) {
-            setCursorWithOffser(13, 22 + i * 10);
-            display.print(Lists.get(i).name);
+        // for (int i = 0; i < Lists.size(); i++) {
+        //     setCursorWithOffser(13, 22 + i * 10);
+        //     display.print(Lists.get(i).name);
+        // }
+
+        for (int i = 0; i < Cards.size(); i++) {
+             setCursorWithOffser(13, 22 + i * 10);
+             display.print(Cards.get(i).name);
         }
 
         setCursorWithOffser(13, 102);

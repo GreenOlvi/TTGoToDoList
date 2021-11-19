@@ -10,12 +10,22 @@
 struct TrelloList {
     trelloId_t id;
     String name;
+    int pos;
+};
+
+struct TrelloCard {
+    trelloId_t id;
+    String name;
+    trelloId_t idList;
+    trelloId_t idBoard;
+    int pos;
 };
 
 class TrelloClient {
     public:
         TrelloClient(String apiKey, String token);
         bool GetListsFromBoard(trelloId_t boardId, LinkedList<TrelloList> &lists);
+        bool GetCardsFromBoard(trelloId_t boardId, LinkedList<TrelloCard> &cards);
     
     private:
         static const String _baseUrl;
