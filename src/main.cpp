@@ -54,9 +54,13 @@ void setup() {
     connectToWiFi();
     // LinkedList<TrelloList> Lists;
     // trello.GetListsFromBoard(BOARD_ID, Lists);
-    LinkedList<TrelloCard> Cards;
-    trello.GetCardsFromBoard(BOARD_ID, Cards);
+    // LinkedList<TrelloCard> Cards;
+    // trello.GetCardsFromBoard(BOARD_ID, Cards);
     // trello.GetCardsFromList(TODO_LIST_ID, Cards);
+    // LinkedList<TrelloCheckitem> Items;
+    // trello.GetCheckItemsFromChecklist(CHECKLIST_ID, Items);
+    auto checklist = trello.GetChecklist(CHECKLIST_ID);
+    ListTitle = checklist->name;
 
     display.firstPage();
     do
@@ -72,12 +76,31 @@ void setup() {
         // }
 
         int y = 22;
-        for (int i = 0; i < Cards.size(); i++) {
-             auto card = Cards.get(i);
-             setCursorWithOffser(13, y);
-             display.print(card.name + " (" + card.idChecklistsSize + ")");
-             y += 10;
+        // for (int i = 0; i < Cards.size(); i++) {
+        //      auto card = Cards.get(i);
+        //      setCursorWithOffser(13, y);
+        //      display.print(card.name + " (" + card.idChecklistsSize + ")");
+        //      y += 10;
+        // }
+        // for (int i = 0; i < Items.size(); i++) {
+        //      auto item = Items.get(i);
+
+        for (int i = 0; i < checklist->checkItemSize; i++) {
+            TrelloCheckitem item = checklist->checkItems[i];
+
+            setCursorWithOffser(0, y);
+            if (item.complete) {
+               display.print("[x]");
+            } else {
+               display.print("[ ]");
+            }
+
+            setCursorWithOffser(20, y);
+            display.print(item.name);
+            y += 10;
         }
+
+
 
         setCursorWithOffser(13, display.height() - 20);
         display.print(WiFi.macAddress());
