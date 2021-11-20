@@ -56,6 +56,7 @@ void setup() {
     // trello.GetListsFromBoard(BOARD_ID, Lists);
     LinkedList<TrelloCard> Cards;
     trello.GetCardsFromBoard(BOARD_ID, Cards);
+    // trello.GetCardsFromList(TODO_LIST_ID, Cards);
 
     display.firstPage();
     do

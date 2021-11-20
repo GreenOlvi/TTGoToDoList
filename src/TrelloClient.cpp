@@ -26,30 +26,13 @@ TrelloCard toTrelloCard(const JsonVariant &object) {
 
 bool TrelloClient::GetListsFromBoard(trelloId_t boardId, LinkedList<TrelloList> &lists) {
     String url = _baseUrl + "boards/" + boardId + "/lists?";
-    _http.begin(url + _authParams);
-    int code = _http.GET();
-
-    if(!code) {
-        _http.end();
-        Serial.println("Error during http request");
-        return false;
-    }
-
-    Stream &response = _http.getStream();
     StaticJsonDocument<768> doc;
-    DeserializationError error = deserializeJson(doc, response);
-    _http.end();
 
-    if (error) {
-        Serial.print(F("deserializeJson() failed with code "));
-        Serial.println(error.f_str());
+    if (!FetchAndParse(url + _authParams, doc)) {
         return false;
     }
-
-    Serial.printf("Elements in response: %d\n", doc.size());
 
     JsonArray root = doc.as<JsonArray>();
-
     for (JsonVariant value : root) {
         lists.add(toTrelloList(value));
     }
@@ -58,9 +41,31 @@ bool TrelloClient::GetListsFromBoard(trelloId_t boardId, LinkedList<TrelloList> 
 }
 
 bool TrelloClient::GetCardsFromBoard(trelloId_t boardId, LinkedList<TrelloCard> &cards) {
-    String url = _baseUrl + "boards/" + boardId + "/cards?"
-        + "fields=id,idBoard,idList,name,pos&";
-    _http.begin(url + _authParams);
+    return GetCardsFromUrl(_baseUrl + "boards/" + boardId + "/cards?fields=id,idBoard,idList,name,pos&", cards);
+}
+
+bool TrelloClient::GetCardsFromList(trelloId_t listId, LinkedList<TrelloCard> &cards) {
+    return GetCardsFromUrl(_baseUrl + "lists/" + listId + "/cards?fields=id,idBoard,idList,name,pos&", cards);
+}
+
+bool TrelloClient::GetCardsFromUrl(String url, LinkedList<TrelloCard> &cards) {
+    DynamicJsonDocument doc(2048);
+    if (!FetchAndParse(url + _authParams, doc)) {
+        return false;
+    }
+
+    JsonArray root = doc.as<JsonArray>();
+    for (JsonVariant value : root) {
+        cards.add(toTrelloCard(value));
+    }
+
+    return true;
+}
+
+bool TrelloClient::FetchAndParse(String url, JsonDocument &doc) {
+    Serial.println(url);
+
+    _http.begin(url);
     int code = _http.GET();
 
     if (!code) {
@@ -73,7 +78,6 @@ bool TrelloClient::GetCardsFromBoard(trelloId_t boardId, LinkedList<TrelloCard> 
     Serial.println(code);
 
     Stream &response = _http.getStream();
-    StaticJsonDocument<2048> doc;
     DeserializationError error = deserializeJson(doc, response);
     _http.end();
 
@@ -84,12 +88,5 @@ bool TrelloClient::GetCardsFromBoard(trelloId_t boardId, LinkedList<TrelloCard> 
     }
 
     Serial.printf("Elements in response: %d\n", doc.size());
-
-    JsonArray root = doc.as<JsonArray>();
-
-    for (JsonVariant value : root) {
-        cards.add(toTrelloCard(value));
-    }
-
     return true;
 }
