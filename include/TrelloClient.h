@@ -5,7 +5,7 @@
 #include <ArduinoJson.h>
 #include <LinkedList.h>
 
-#define trelloId_t String
+typedef String trelloId_t;
 
 struct TrelloList {
     trelloId_t id;
@@ -19,6 +19,8 @@ struct TrelloCard {
     trelloId_t idList;
     trelloId_t idBoard;
     int pos;
+    trelloId_t *idChecklists;
+    int idChecklistsSize;
 };
 
 class TrelloClient {
@@ -33,6 +35,7 @@ class TrelloClient {
         bool GetCardsFromUrl(String url, LinkedList<TrelloCard> &cards);
 
         static const String _baseUrl;
+        static const String _cardFields;
         HTTPClient _http;
         String _authParams;
 };

@@ -71,14 +71,17 @@ void setup() {
         //     display.print(Lists.get(i).name);
         // }
 
+        int y = 22;
         for (int i = 0; i < Cards.size(); i++) {
-             setCursorWithOffser(13, 22 + i * 10);
-             display.print(Cards.get(i).name);
+             auto card = Cards.get(i);
+             setCursorWithOffser(13, y);
+             display.print(card.name + " (" + card.idChecklistsSize + ")");
+             y += 10;
         }
 
-        setCursorWithOffser(13, 102);
+        setCursorWithOffser(13, display.height() - 20);
         display.print(WiFi.macAddress());
-        setCursorWithOffser(13, 112);
+        setCursorWithOffser(13, display.height() - 10);
         display.print(WiFi.localIP());
     } while (display.nextPage());
 }

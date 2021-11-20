@@ -1,6 +1,7 @@
 #include "TrelloClient.h"
  
 const String TrelloClient::_baseUrl = "https://api.trello.com/1/";
+const String TrelloClient::_cardFields = "id,idBoard,idList,name,pos,idChecklists";
 
 TrelloClient::TrelloClient(String apiKey, String token)
     : _http(), _authParams("key=" + apiKey + "&token=" + token) {
@@ -14,13 +15,23 @@ TrelloList toTrelloList(const JsonVariant &object) {
     return list;
 }
 
-TrelloCard toTrelloCard(const JsonVariant &object) {
-    TrelloCard card;
-    card.id = object.getMember("id").as<trelloId_t>();
-    card.name = object.getMember("name").as<String>();
-    card.idList = object.getMember("idList").as<trelloId_t>();
-    card.idBoard = object.getMember("idBoard").as<trelloId_t>();
-    card.pos = object.getMember("pos").as<int>();
+TrelloCard* toTrelloCard(const JsonObject &object) {
+    TrelloCard *card = new TrelloCard();
+    card->id = object.getMember("id").as<trelloId_t>();
+    card->name = object.getMember("name").as<String>();
+    card->idList = object.getMember("idList").as<trelloId_t>();
+    card->idBoard = object.getMember("idBoard").as<trelloId_t>();
+    card->pos = object.getMember("pos").as<int>();
+
+    auto checklists = object.getMember("idChecklists").as<JsonArray>();
+    card->idChecklistsSize = checklists.size();
+    card->idChecklists = new trelloId_t[card->idChecklistsSize];
+
+    int i = 0;
+    for (trelloId_t id : checklists) {
+        card->idChecklists[i++] = id;
+    }
+
     return card;
 }
 
@@ -33,7 +44,7 @@ bool TrelloClient::GetListsFromBoard(trelloId_t boardId, LinkedList<TrelloList> 
     }
 
     JsonArray root = doc.as<JsonArray>();
-    for (JsonVariant value : root) {
+    for (JsonObject value : root) {
         lists.add(toTrelloList(value));
     }
 
@@ -41,11 +52,11 @@ bool TrelloClient::GetListsFromBoard(trelloId_t boardId, LinkedList<TrelloList> 
 }
 
 bool TrelloClient::GetCardsFromBoard(trelloId_t boardId, LinkedList<TrelloCard> &cards) {
-    return GetCardsFromUrl(_baseUrl + "boards/" + boardId + "/cards?fields=id,idBoard,idList,name,pos&", cards);
+    return GetCardsFromUrl(_baseUrl + "boards/" + boardId + "/cards?fields=" + _cardFields + "&", cards);
 }
 
 bool TrelloClient::GetCardsFromList(trelloId_t listId, LinkedList<TrelloCard> &cards) {
-    return GetCardsFromUrl(_baseUrl + "lists/" + listId + "/cards?fields=id,idBoard,idList,name,pos&", cards);
+    return GetCardsFromUrl(_baseUrl + "lists/" + listId + "/cards?fields=" + _cardFields + "&", cards);
 }
 
 bool TrelloClient::GetCardsFromUrl(String url, LinkedList<TrelloCard> &cards) {
@@ -56,7 +67,7 @@ bool TrelloClient::GetCardsFromUrl(String url, LinkedList<TrelloCard> &cards) {
 
     JsonArray root = doc.as<JsonArray>();
     for (JsonVariant value : root) {
-        cards.add(toTrelloCard(value));
+        cards.add(*toTrelloCard(value));
     }
 
     return true;
