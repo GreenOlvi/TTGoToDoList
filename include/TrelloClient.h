@@ -46,6 +46,7 @@ class TrelloClient {
         bool GetListsFromBoard(const trelloId_t boardId, LinkedList<TrelloList> &lists);
         bool GetCardsFromBoard(const trelloId_t boardId, LinkedList<TrelloCard> &cards);
         bool GetCardsFromList(const trelloId_t listId, LinkedList<TrelloCard> &cards);
+        TrelloCard* GetCard(const trelloId_t cardId);
         TrelloChecklist* GetChecklist(const trelloId_t checklistId);
         bool GetCheckItemsFromChecklist(const trelloId_t checklistId, LinkedList<TrelloCheckitem> &items);
     

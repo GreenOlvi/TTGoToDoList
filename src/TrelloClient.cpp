@@ -105,6 +105,15 @@ bool TrelloClient::GetCardsFromUrl(const String url, LinkedList<TrelloCard> &car
     return true;
 }
 
+TrelloCard* TrelloClient::GetCard(const trelloId_t cardId) {
+    String url = _baseUrl + "cards/" + cardId + "?";
+    DynamicJsonDocument doc(2048);
+    if (!FetchAndParse(url + _authParams, doc)) {
+        return nullptr;
+    }
+    return toTrelloCard(doc.as<JsonObject>());
+}
+
 TrelloChecklist* TrelloClient::GetChecklist(const trelloId_t checklistId) {
     String url = _baseUrl + "checklists/" + checklistId + "?";
     DynamicJsonDocument doc(2048);

@@ -17,7 +17,8 @@ GxEPD2_BW<GxEPD2_213_B72, GxEPD2_213_B72::HEIGHT> display(GxEPD2_213_B72(CS_PIN,
 
 TrelloClient trello(TRELLO_API_KEY, TRELLO_TOKEN);
 
-String ListTitle = "To do list";
+String ListTitle;
+LinkedList<TrelloCheckitem> ListItems;
 
 void drawGrid() {
     for (int i = 0; i < display.height(); i += 10) {
@@ -42,6 +43,18 @@ void connectToWiFi() {
     Serial.println("Connected to WiFi");
 }
 
+void LoadViewFromCard(trelloId_t cardId) {
+    auto card = trello.GetCard(cardId);
+    if (card == nullptr) {
+        return;
+    }
+
+    ListTitle = card->name;
+    for (int i = 0; i < card->idChecklistsSize; i++) {
+        trello.GetCheckItemsFromChecklist(card->idChecklists[i], ListItems);
+    }
+}
+
 void setup() {
     Serial.begin(115200);
 
@@ -52,15 +65,7 @@ void setup() {
     display.setFullWindow();
 
     connectToWiFi();
-    // LinkedList<TrelloList> Lists;
-    // trello.GetListsFromBoard(BOARD_ID, Lists);
-    // LinkedList<TrelloCard> Cards;
-    // trello.GetCardsFromBoard(BOARD_ID, Cards);
-    // trello.GetCardsFromList(TODO_LIST_ID, Cards);
-    // LinkedList<TrelloCheckitem> Items;
-    // trello.GetCheckItemsFromChecklist(CHECKLIST_ID, Items);
-    auto checklist = trello.GetChecklist(CHECKLIST_ID);
-    ListTitle = checklist->name;
+    LoadViewFromCard(CARD_ID);
 
     display.firstPage();
     do
@@ -70,37 +75,21 @@ void setup() {
         setCursorWithOffser(13, 2);
         display.print(ListTitle);
 
-        // for (int i = 0; i < Lists.size(); i++) {
-        //     setCursorWithOffser(13, 22 + i * 10);
-        //     display.print(Lists.get(i).name);
-        // }
-
         int y = 22;
-        // for (int i = 0; i < Cards.size(); i++) {
-        //      auto card = Cards.get(i);
-        //      setCursorWithOffser(13, y);
-        //      display.print(card.name + " (" + card.idChecklistsSize + ")");
-        //      y += 10;
-        // }
-        // for (int i = 0; i < Items.size(); i++) {
-        //      auto item = Items.get(i);
-
-        for (int i = 0; i < checklist->checkItemSize; i++) {
-            TrelloCheckitem item = checklist->checkItems[i];
+        for (int i = 0; i < ListItems.size(); i++) {
+            TrelloCheckitem item = ListItems[i];
 
             setCursorWithOffser(0, y);
             if (item.complete) {
                display.print("[x]");
             } else {
-               display.print("[ ]");
+               display.print("[  ]");
             }
 
             setCursorWithOffser(20, y);
             display.print(item.name);
             y += 10;
         }
-
-
 
         setCursorWithOffser(13, display.height() - 20);
         display.print(WiFi.macAddress());
