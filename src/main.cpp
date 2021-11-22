@@ -5,6 +5,8 @@
 #include <GxEPD2_BW.h>
 #include <fonts/Font5x7Fixed.h>
 #include <LinkedList.h>
+#include <nvs_flash.h>
+#include <nvs.h>
 
 #include "secrets.h"
 #include "pins.h"
@@ -19,6 +21,7 @@ TrelloClient trello(TRELLO_API_KEY, TRELLO_TOKEN);
 
 String ListTitle;
 LinkedList<TrelloCheckitem> ListItems;
+int32_t RestartCounter = 0;
 
 void drawGrid() {
     for (int i = 0; i < display.height(); i += 10) {
@@ -30,6 +33,39 @@ void drawGrid() {
 
 void setCursorWithOffser(int16_t x, int16_t y) {
     display.setCursor(x - FONT_OFFSET_X, y - FONT_OFFSET_Y);
+}
+
+void initNvs() {
+
+    auto err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        Serial.printf("Erased flash");
+        err = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(err);
+
+    nvs_handle NvsHandle;
+    err = nvs_open("storage", NVS_READWRITE, &NvsHandle);
+
+    err = nvs_get_i32(NvsHandle, "restartCounter", &RestartCounter);
+    switch (err) {
+        case ESP_OK:
+            Serial.printf("Restart counter = %d\n", RestartCounter);
+            break;
+        case ESP_ERR_NVS_NOT_FOUND:
+            Serial.printf("Not initialized yet\n");
+            break;
+        default:
+            Serial.printf("Error (%s) reading\n", esp_err_to_name(err));
+            break;
+    }
+
+    RestartCounter++;
+
+    err = nvs_set_i32(NvsHandle, "restartCounter", RestartCounter);
+    err = nvs_commit(NvsHandle);
+    nvs_close(NvsHandle);
 }
 
 void connectToWiFi() {
@@ -64,6 +100,8 @@ void setup() {
     display.setTextColor(GxEPD_BLACK);
     display.setFullWindow();
 
+    initNvs();
+
     connectToWiFi();
     LoadViewFromCard(CARD_ID);
 
@@ -91,6 +129,8 @@ void setup() {
             y += 10;
         }
 
+        setCursorWithOffser(13, display.height() - 30);
+        display.printf("Restarts: %d", RestartCounter);
         setCursorWithOffser(13, display.height() - 20);
         display.print(WiFi.macAddress());
         setCursorWithOffser(13, display.height() - 10);
